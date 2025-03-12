@@ -3,6 +3,7 @@ package org.ui3.fclient;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import org.ui3.fclient.databinding.ActivityMainBinding;
@@ -12,6 +13,8 @@ public class MainActivity extends AppCompatActivity {
     // Used to load the 'fclient' library on application startup.
     static {
         System.loadLibrary("fclient");
+        System.loadLibrary("mbedcrypto");
+
     }
 
     private ActivityMainBinding binding;
@@ -23,6 +26,15 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        int res = initRng();
+        byte[] v = randomBytes(10);
+
+        byte[] key = new byte[16];
+        byte[] data = "Hello world".getBytes();
+        byte[] encryptedData = encrypt(key, data);
+        byte[] decryptedData = decrypt(key, encryptedData);
+        Log.d("decryptedData", new String(decryptedData));
+
         // Example of a call to a native method
         TextView tv = binding.sampleText;
         tv.setText(stringFromJNI());
@@ -33,4 +45,8 @@ public class MainActivity extends AppCompatActivity {
      * which is packaged with this application.
      */
     public native String stringFromJNI();
+    public native int initRng();
+    public static native byte[] randomBytes(int no);
+    public static native byte[] encrypt(byte[] key, byte[] data);
+    public static native byte[] decrypt(byte[] key, byte[] data);
 }

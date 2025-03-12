@@ -18,6 +18,9 @@ android {
             cmake {
                 cppFlags += "-std=c++17"
             }
+            ndk {
+                abiFilters.addAll(listOf("x86", "x86_64"))
+            }
         }
     }
 
