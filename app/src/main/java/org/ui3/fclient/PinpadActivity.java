@@ -12,8 +12,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.text.DecimalFormat;
+import org.ui3.fclient.databinding.ActivityPinpadBinding;
+
 public class PinpadActivity extends AppCompatActivity {
 
+
+    private ActivityPinpadBinding binding;
     TextView tvPin;
     String pin = "";
     final int MAX_KEYS = 10;
@@ -21,18 +26,13 @@ public class PinpadActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_pinpad);
-        //        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-        //            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-        //            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-        //            return insets;
-        //        });
-        tvPin = findViewById(R.id.txtPin);
+        binding = ActivityPinpadBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        tvPin = binding.txtPin;
 
         ShuffleKeys();
 
-        findViewById(R.id.btnOK).setOnClickListener((View) -> {
+        binding.btnOK.setOnClickListener((View) -> {
             Intent it = new Intent();
             it.putExtra("pin", pin);
             setResult(RESULT_OK, it);
@@ -41,10 +41,24 @@ public class PinpadActivity extends AppCompatActivity {
 
 
 
-        findViewById(R.id.btnReset).setOnClickListener((View) -> {
+        binding.btnReset.setOnClickListener((View) -> {
             pin = "";
             tvPin.setText("");
         });
+
+        TextView ta = findViewById(R.id.txtAmount);
+        String amt = String.valueOf(getIntent().getStringExtra("amount"));
+        Long f = Long.valueOf(amt);
+        DecimalFormat df = new DecimalFormat("#,###,###,##0.00");
+        String s = df.format(f);
+        ta.setText("Сумма: " + s);
+
+        TextView tp = findViewById(R.id.txtPtc);
+        int pts = getIntent().getIntExtra("ptc", 0);
+        if (pts == 2)
+            tp.setText("Осталось две попытки");
+        else if (pts == 1)
+            tp.setText("Осталась одна попытка");
 
 
     }
