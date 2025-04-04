@@ -138,6 +138,8 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
 //        byte[] trd = stringToHex("9F0206000000000100");
 //        transaction(trd);
         testHttpClient();
+        byte[] trd = stringToHex("9F0206000000000100");
+        transaction(trd);
     }
 
     protected void testHttpClient()
