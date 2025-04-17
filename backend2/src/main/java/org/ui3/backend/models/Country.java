@@ -1,6 +1,6 @@
 package org.ui3.backend.models;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.util.List;
 import java.util.ArrayList;
