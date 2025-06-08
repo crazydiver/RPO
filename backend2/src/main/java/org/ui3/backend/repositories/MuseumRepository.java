@@ -7,5 +7,5 @@ import org.ui3.backend.models.Museum;
 @Repository
 public interface MuseumRepository extends JpaRepository<Museum, Long>
 {
-
+    Museum findByName(String name);
 }

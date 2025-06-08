@@ -19,7 +19,7 @@ const Alert = (props) => {
             <Modal.Footer>
                 <Button onClick={onok} className="btn btn-primary mr-2">Ok</Button>
                 {cancelButton &&
-                <Button onClick={close} className="btn btn-secondary">Cancel</Button>
+                    <Button onClick={close} className="btn btn-secondary">Cancel</Button>
                 }
             </Modal.Footer>
         </Modal>

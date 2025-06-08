@@ -1,43 +1,33 @@
 package org.ui3.backend.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
+@Getter
+@Setter
 @Entity
 @Table(name = "museums")
-@Access(AccessType.FIELD)
 public class Museum {
-
-    public Museum() { }
-    public Museum(Long id) {
-        this.id = id;
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    public long id;
+    private Long id;
 
-    @Column(name = "name", nullable = false, unique = true)
-    public String name;
+    @Column(name = "name", nullable = false, length = 128)
+    private String name;
 
-    @Column(name = "location")
-    public String location;
+    @Column(name = "location", length = 128)
+    private String location;
 
+    @OneToMany(mappedBy = "museum")
+    private List<Painting> paintings;
+
+    @ManyToMany(mappedBy = "museums")
     @JsonIgnore
-    @OneToMany
-    public List<Painting>
-            paintings = new ArrayList<>();
-
-    @JsonIgnore
-    @ManyToMany
-    @JoinTable(name = "usersmuseums", joinColumns = @JoinColumn(name = "museumid"),
-            inverseJoinColumns = @JoinColumn(name = "userid"))
-    public Set<User>
-            users = new HashSet<>();
+    private Set<User> users;
 }

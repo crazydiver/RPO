@@ -1,29 +1,35 @@
 package org.ui3.backend.models;
 
-import javax.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 
+import javax.persistence.*;
+import java.util.List;
+
+@Getter
+@Setter
 @Entity
 @Table(name = "artists")
-@Access(AccessType.FIELD)
 public class Artist {
-
-    public Artist(){ }
-    public Artist(Long id){
-        this.id = id;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    public Long id;
+    private Long id;
 
-    @Column(name = "name", nullable = false, unique = true)
-    public String name;
+    @Column(name = "name", nullable = false, length = 128, unique = true)
+    private String name;
 
-    @Column(name = "century", nullable = false)
-    public int age;
+    @ManyToOne
+    @JoinColumn(name = "countryid", referencedColumnName = "id")
+    @JsonBackReference
+    private Countries country;
 
-    @ManyToOne()
-    @JoinColumn(name = "countryid")
-    public Country country;
+    @Column(name = "age", length = 45)
+    private String age;
+
+    @OneToMany(mappedBy = "artist")
+    @JsonIgnore
+    private List<Painting> paintings;
 }

@@ -1,7 +1,7 @@
 package org.ui3.backend.path;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
 import org.springframework.security.core.AuthenticationException;
@@ -14,57 +14,59 @@ import org.springframework.stereotype.Component;
 import org.ui3.backend.repositories.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Optional;
 
 @Component
 public class AuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
-
     @Autowired
     UserRepository userRepository;
-
-    @Value("${private.session-timeout}")
-    private int sessionTimeout;
-
     @Override
-    protected void additionalAuthenticationChecks(UserDetails userDetails,
-                                                  UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) throws AuthenticationException {
+    protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) throws AuthenticationException {
 
     }
 
     @Override
-    protected UserDetails retrieveUser(String userName,
-                                       UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken)
-            throws AuthenticationException {
+    protected UserDetails retrieveUser(String userName, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) throws AuthenticationException {
 
         Object token = usernamePasswordAuthenticationToken.getCredentials();
-        Optional<org.ui3.backend.models.User> uu = userRepository.findByToken(String.valueOf(token));
-        if (!uu.isPresent())
+        org.ui3.backend.models.User user = userRepository.findByToken(String.valueOf(token));
+
+        if (user == null)
             throw new UsernameNotFoundException("user is not found");
-        org.ui3.backend.models.User u = uu.get();
+
 
         boolean timeout = true;
-        LocalDateTime dt  = LocalDateTime.now();
-        if (u.activity != null) {
-            LocalDateTime nt = u.activity.plusMinutes(sessionTimeout);
-            if (dt.isBefore(nt))
+        Date currentTime = new Date();
+        if (user.getActivity() != null) {
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(user.getActivity());
+            cal.add(Calendar.MINUTE, 10);
+            Date sessionExpiryTime = cal.getTime();
+
+
+            if (currentTime.before(sessionExpiryTime))
                 timeout = false;
         }
+
         if (timeout) {
-            u.token = null;
-            userRepository.save(u);
-            throw new NonceExpiredException("session is expired");
-        }
-        else {
-            u.activity = dt;
-            userRepository.save(u);
+
+            user.setToken(null);
+            userRepository.save(user);
+            throw new CredentialsExpiredException("session is expired");
+        } else {
+
+            user.setActivity(currentTime);
+            userRepository.save(user);
         }
 
-        UserDetails user= new User(u.login, u.password,
+        return new User(user.getLogin(), user.getPassword(),
                 true,
                 true,
                 true,
                 true,
                 AuthorityUtils.createAuthorityList("USER"));
-        return user;
     }
 }

@@ -1,50 +1,52 @@
 package org.ui3.backend.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.*;
+import java.util.*;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "users")
-@Access(AccessType.FIELD)
 public class User {
-
-    public User() { }
-    public User(Long id) {
-        this.id = id;
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    public long id;
+    private Long id;
 
-    @Column(name = "login", nullable = false, unique = true)
-    public String login;
+    @Column(name = "login", nullable = false, length = 45, unique = true)
+    private String login;
 
-    @Column(name = "email", nullable = false, unique = true)
-    public String email;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "password",  length = 64)
+    private String password;
 
-    @JsonIgnore
-    @Column(name = "password")
-    public String password;
+    @Column(name = "email", nullable = false, length = 45, unique = true)
+    private String email;
 
-    @JsonIgnore
-    @Column(name = "salt")
-    public String salt;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "salt", length = 64)
+    private String salt;
 
-    @Column(name = "token")
-    public String token;
+    @Column(name = "token", length = 256)
+    private String token;
 
     @Column(name = "activity")
-    public LocalDateTime activity;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date activity;
 
     @ManyToMany
-    @JoinTable(name = "usersmuseums", joinColumns = @JoinColumn(name = "userid"),
-            inverseJoinColumns = @JoinColumn(name = "museumid"))
-    public Set<Museum> museums = new HashSet<>();
+    @JoinTable(
+            name = "usersmuseums",
+            joinColumns = @JoinColumn(name = "userid"),
+            inverseJoinColumns = @JoinColumn(name = "museumid")
+    )
+    @JsonIgnore // ← добавьте эту строку
+    private Set<Museum> museums;
+
 
 }

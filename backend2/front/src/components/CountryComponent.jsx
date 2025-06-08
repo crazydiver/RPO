@@ -1,80 +1,106 @@
-import React, {useEffect, useState} from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import BackendService from '../services/BackendService';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {alertActions} from "../utils/Rdx";
-import {connect} from "react-redux";
-import {Form} from "react-bootstrap";
-import {useNavigate, useParams} from "react-router-dom";
-import {faChevronLeft, faSave} from "@fortawesome/free-solid-svg-icons";
 
-const CountryComponent = props => {
-    const params = useParams();
-    const [id, setId] = useState(params.id);
-    const [name, setName] = useState("");
-    const [hidden, setHidden] = useState(false);
+const CountryComponent = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
+    const [name, setName] = useState('');
+    const [submitted, setSubmitted] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
-        if (parseInt(id) !== -1) {
+        // Если id не -1, загружаем данные страны для редактирования
+        if (id !== '-1') {
             BackendService.retrieveCountry(id)
-                .then((resp) => {
-                    setName(resp.data.name)
+                .then(response => {
+                    console.log("Загруженные данные страны:", response.data);
+                    setName(response.data.name);
                 })
-                .catch(() => setHidden(true))
+                .catch(error => {
+                    console.error("Ошибка загрузки страны:", error);
+                    setErrorMessage("Ошибка при загрузке данных страны");
+                });
         }
-    }, []); // [] нужны для вызова useEffect только один раз при инициализации компонента
-    // это нужно для того, чтобы в состояние name каждый раз не записывалось значение из БД
+    }, [id]);
 
-    const onSubmit = (event) => {
+    const handleSubmit = (event) => {
         event.preventDefault();
-        event.stopPropagation();
-        let err = null;
-        if (!name) err = "Name should be defined";
-        if (err) props.dispatch(alertActions.error(err));
-        let country = {id, name};
+        setSubmitted(true);
+        setErrorMessage('');
 
-        if (parseInt(country.id) === -1) {
-            BackendService.createCountry(country)
-                .then(() => navigate(`/countries`))
-                .catch(() => {
-                })
-        } else {
-            BackendService.updateCountry(country)
-                .then(() => navigate(`/countries`))
-                .catch(() => {
-                })
+        if (name) {
+            if (id === '-1') {
+                // Создание новой страны
+                const newCountry = { name };
+                BackendService.createCountry(newCountry)
+                    .then(response => {
+                        console.log("Страна успешно создана:", response.data);
+                        navigate('/countries');
+                    })
+                    .catch(error => {
+                        console.error("Ошибка создания страны:", error);
+                        if (error.response && error.response.data && error.response.data.message) {
+                            setErrorMessage(error.response.data.message);
+                        } else {
+                            setErrorMessage("Ошибка при создании страны");
+                        }
+                    });
+            } else {
+                // Обновление существующей страны
+                const updatedCountry = {
+                    id: id,
+                    name
+                };
+
+                BackendService.updateCountry(updatedCountry)
+                    .then(response => {
+                        console.log("Страна успешно обновлена:", response.data);
+                        navigate('/countries');
+                    })
+                    .catch(error => {
+                        console.error("Ошибка обновления страны:", error);
+                        if (error.response && error.response.data && error.response.data.message) {
+                            setErrorMessage(error.response.data.message);
+                        } else {
+                            setErrorMessage("Ошибка при обновлении страны");
+                        }
+                    });
+            }
         }
-    }
+    };
 
-    if (hidden)
-        return null;
+    const handleCancel = () => {
+        navigate('/countries');
+    };
+
     return (
-        <div className="m-4">
-            <div className=" row my-2 mr-0">
-                <h3>Country</h3>
-                <button className="btn btn-outline-secondary ml-auto"
-                        onClick={() => navigate(`/countries`)}
-                ><FontAwesomeIcon icon={faChevronLeft}/>{' '}Back</button>
+        <div className="container">
+            <div className="row">
+                <div className="col-md-6 offset-md-3">
+                    <h2>{id === '-1' ? 'Добавление страны' : 'Редактирование страны'}</h2>
+                    {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group mb-3">
+                            <label htmlFor="name">Название</label>
+                            <input
+                                id="name"
+                                type="text"
+                                className={`form-control ${submitted && !name ? 'is-invalid' : ''}`}
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                            {submitted && !name && <div className="invalid-feedback">Введите название страны</div>}
+                        </div>
+                        <div className="form-group">
+                            <button type="submit" className="btn btn-primary me-2">Сохранить</button>
+                            <button type="button" className="btn btn-secondary" onClick={handleCancel}>Отмена</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <Form onSubmit={onSubmit}>
-                <Form.Group>
-                    <Form.Label>Name</Form.Label>
-                    <Form.Control
-                        type="text"
-                        placeholder="Enter country name"
-                        onChange={(e) => {setName(e.target.value)}}
-                        value={name}
-                        name="name"
-                        autoComplete="off"
-                    />
-                </Form.Group>
-                <button className="btn btn-outline-secondary" type="submit">
-                    <FontAwesomeIcon icon={faSave}/>{' '}
-                    Save
-                </button>
-            </Form>
         </div>
-    )
-}
+    );
+};
 
-export default connect()(CountryComponent);
+export default CountryComponent;

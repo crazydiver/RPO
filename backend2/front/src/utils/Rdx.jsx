@@ -15,17 +15,20 @@ export const alertConstants = {
     CLEAR: 'ALERT_CLEAR'
 };
 
-// Генераторы действий (Action Creators)
 export const userActions = {
-    login(user) {
-        Utils.saveUser(user);
-        return { type: userConstants.LOGIN, user };
-    },
-    logout() {
-        Utils.removeUser();
-        return { type: userConstants.LOGOUT };
-    }
+    login,
+    logout
 };
+
+function login(user) {
+    Utils.saveUser(user)
+    return { type: userConstants.LOGIN, user }
+}
+
+function logout() {
+    Utils.removeUser()
+    return { type: userConstants.LOGOUT }
+}
 
 export const alertActions = {
     success(message) {
@@ -45,7 +48,7 @@ const initialState = user ? { user } : {};
 
 // Редюсер для аутентификации
 function authentication(state = initialState, action) {
-    console.log("authentication");
+    console.log("authentication reducer:", action.type, action.user);
     switch (action.type) {
         case userConstants.LOGIN:
             return { user: action.user };

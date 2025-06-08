@@ -4,23 +4,19 @@ import { faTrash, faEdit, faPlus } from '@fortawesome/free-solid-svg-icons'
 import Alert from './Alert'
 import BackendService from "../services/BackendService";
 import { useNavigate } from 'react-router-dom';
-import PaginationComponent from './PaginationComponent'; // Добавляем импорт
 
-const CountryListComponent = props => {
+const UserListComponent = props => {
 
     const [message, setMessage] = useState();
-    const [countries, setCountries] = useState([]);
-    const [selectedCountries, setSelectedCountries] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [selectedUsers, setSelectedUsers] = useState([]);
     const [show_alert, setShowAlert] = useState(false);
     const [checkedItems, setCheckedItems] = useState([]);
     const [hidden, setHidden] = useState(false);
     const navigate = useNavigate();
-    const [page, setPage] = useState(0);
-    const [totalCount, setTotalCount] = useState(0);
-    const limit = 2;
 
     const setChecked = v =>  {
-        setCheckedItems(Array(countries.length).fill(v));
+        setCheckedItems(Array(users.length).fill(v));
     }
 
     const handleCheckChange = e => {
@@ -37,9 +33,9 @@ const CountryListComponent = props => {
         setChecked(isChecked);
     }
 
-    const deleteCountriesClicked = () => {
+    const deleteUsersClicked = () => {
         let x = [];
-        countries.map ((t, idx) => {
+        users.map ((t, idx) => {
             if (checkedItems[idx]) {
                 x.push(t)
             }
@@ -48,49 +44,43 @@ const CountryListComponent = props => {
         if (x.length > 0) {
             var msg;
             if (x.length > 1) {
-                msg = "Пожалуйста подтвердите удаление " + x.length + " стран";
+                msg = "Пожалуйста подтвердите удаление " + x.length + " пользователей";
             }
             else  {
-                msg = "Пожалуйста подтвердите удаление страны " + x[0].name;
+                msg = "Пожалуйста подтвердите удаление пользователя " + x[0].login;
             }
             setShowAlert(true);
-            setSelectedCountries(x);
+            setSelectedUsers(x);
             setMessage(msg);
         }
     }
 
-    const refreshCountries = cp => {
-        BackendService.retrieveAllCountries(cp, limit)
+    const refreshUsers = () => {
+        BackendService.retrieveAllUsersDetailed()
             .then(
                 resp => {
-                    setCountries(resp.data.content);
+                    setUsers(resp.data);
                     setHidden(false);
-                    setTotalCount(resp.data.totalElements);
-                    setPage(cp);
                 }
             )
-            .catch(()=> {
-                setHidden(true );
-                setTotalCount(0);
+            .catch((error)=> {
+                console.error("Ошибка загрузки пользователей:", error);
+                setHidden(true);
             })
             .finally(()=> setChecked(false))
     }
 
     useEffect(() => {
-        refreshCountries(0); // Передаем 0 для загрузки первой страницы
+        refreshUsers();
     }, [])
 
-    const onPageChanged = cp => {
-        refreshCountries(cp - 1)
-    }
-
-    const updateCountryClicked = id => {
-        navigate(`/countries/${id}`)
+    const updateUserClicked = id => {
+        navigate(`/users/${id}`)
     }
 
     const onDelete = () =>  {
-        BackendService.deleteCountries(selectedCountries)
-            .then( () => refreshCountries(page)) // Обновляем текущую страницу
+        BackendService.deleteUsers(selectedUsers)
+            .then(() => refreshUsers())
             .catch(()=>{})
     }
 
@@ -98,8 +88,15 @@ const CountryListComponent = props => {
         setShowAlert(false)
     }
 
-    const addCountryClicked = () => {
-        navigate(`/countries/-1`)
+    const addUserClicked = () => {
+        navigate(`/users/-1`)
+    }
+
+    // Форматирование даты активности
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString();
     }
 
     if (hidden)
@@ -107,35 +104,32 @@ const CountryListComponent = props => {
     return (
         <div className="m-4">
             <div className="row my-2">
-                <h3>Страны</h3>
+                <h3>Пользователи</h3>
                 <div className="btn-toolbar">
                     <div className="btn-group ms-auto">
                         <button className="btn btn-outline-secondary"
-                                onClick={addCountryClicked}>
+                                onClick={addUserClicked}>
                             <FontAwesomeIcon icon={faPlus} />{' '}Добавить
                         </button>
                     </div>
                     <div className="btn-group ms-2">
                         <button className="btn btn-outline-secondary"
-                                onClick={deleteCountriesClicked}>
+                                onClick={deleteUsersClicked}>
                             <FontAwesomeIcon icon={faTrash} />{' '}Удалить
                         </button>
                     </div>
                 </div>
             </div>
             <div className="row my-2 me-0">
-                <PaginationComponent
-                    totalRecords={totalCount}
-                    pageLimit={limit}
-                    pageNeighbours={1}
-                    onPageChanged={onPageChanged} />
                 <table className="table table-sm">
                     <thead className="thead-light">
                     <tr>
-                        <th>Название</th>
+                        <th>Логин</th>
+                        <th>Email</th>
+                        <th>Последняя активность</th>
                         <th>
                             <div className="btn-toolbar pb-1">
-                                <div className="btn-group  ms-auto">
+                                <div className="btn-group ms-auto">
                                     <input type="checkbox" onChange={handleGroupCheckChange} />
                                 </div>
                             </div>
@@ -144,21 +138,23 @@ const CountryListComponent = props => {
                     </thead>
                     <tbody>
                     {
-                        countries && countries.map((country, index) =>
-                            <tr key={country.id}>
-                                <td>{country.name}</td>
+                        users && users.map((user, index) =>
+                            <tr key={user.id}>
+                                <td>{user.login}</td>
+                                <td>{user.email}</td>
+                                <td>{formatDate(user.activity)}</td>
                                 <td>
                                     <div className="btn-toolbar">
-                                        <div className="btn-group  ms-auto">
+                                        <div className="btn-group ms-auto">
                                             <button className="btn btn-outline-secondary btn-sm btn-toolbar"
                                                     onClick={() =>
-                                                        updateCountryClicked(country.id)}>
+                                                        updateUserClicked(user.id)}>
                                                 <FontAwesomeIcon icon={faEdit} fixedWidth />
                                             </button>
                                         </div>
-                                        <div className="btn-group  ms-2  mt-1">
+                                        <div className="btn-group ms-2 mt-1">
                                             <input type="checkbox" name={index}
-                                                   checked={checkedItems.length> index ?  checkedItems[index] : false}
+                                                   checked={checkedItems.length > index ? checkedItems[index] : false}
                                                    onChange={handleCheckChange}/>
                                         </div>
                                     </div>
@@ -179,4 +175,4 @@ const CountryListComponent = props => {
     )
 }
 
-export default CountryListComponent;
+export default UserListComponent;

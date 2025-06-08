@@ -10,7 +10,7 @@ function LoginComponent(props) {
     const [password, setPassword] = useState('');
     const [loggingIn, setLoggingIn] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-   // const [error_message, setErrorMessage] = useState(null);
+   const [error_message, setErrorMessage] = useState(null);
     const nav = useNavigate();
     // Получаем dispatch из Redux через props
     const { dispatch } = props;
@@ -23,32 +23,35 @@ function LoginComponent(props) {
         setPassword(e.target.value);
     }
 
+
     function handleSubmit(e) {
         e.preventDefault();
         setSubmitted(true);
-     //   setErrorMessage(null);
+        setErrorMessage(null);
         setLoggingIn(true);
-        BackendService.login(username, password)
-            .then(resp => {
-                console.log(resp.data);
-                setLoggingIn(false);
-                // Используем dispatch для вызова действия Redux
-                dispatch(userActions.login(resp.data));
-                nav("/home");
-            })
-            .catch(err => {
-            /*    if (err.response && err.response.status === 401)
-                    setErrorMessage("Ошибка авторизации");
-                else
-                    setErrorMessage(err.message);*/
-                setLoggingIn(false);
-            })
+        if (username && password) {
+            BackendService.login(username, password)
+                .then(resp => {
+                    console.log("Login response:", resp.data);
+                    setLoggingIn(false);
+                    dispatch(userActions.login(resp.data));
+                    nav("/home");
+                })
+                .catch(err => {
+                    if (err.response && err.response.status === 401)
+                        setErrorMessage("Ошибка авторизации");
+                    else
+                        setErrorMessage(err.message);
+                    setLoggingIn(false);
+                });
+        }
     }
-
     return (
         <div className="col-md-6 me-0">
 
             <h2>Вход</h2>
+            {error_message &&
+                <div className="alert alert-danger">{error_message}</div>}
             <form name="form" onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label htmlFor="username">Логин</label>
@@ -79,3 +82,4 @@ function LoginComponent(props) {
 
 // Подключаем компонент к Redux без mapStateToProps, так как нам не нужно считывать состояние
 export default connect()(LoginComponent);
+// export default connect()(function  Login() { ... )
